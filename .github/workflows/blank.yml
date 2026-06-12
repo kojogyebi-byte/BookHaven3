@@ -1,0 +1,53 @@
+name: Build BookHaven APK
+
+# Builds an installable Android APK in the cloud — no local Android Studio needed.
+# Push to GitHub (or run manually from the Actions tab) and download the APK
+# from the run's "Artifacts" section when it finishes.
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Build debug APK
+        run: ./gradlew assembleDebug --stacktrace
+
+      - name: Build unsigned release APK
+        run: ./gradlew assembleRelease --stacktrace
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: BookHaven-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      - name: Upload release APK (unsigned)
+        uses: actions/upload-artifact@v4
+        with:
+          name: BookHaven-release-unsigned-apk
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
